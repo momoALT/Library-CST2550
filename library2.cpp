@@ -60,7 +60,11 @@ public:
 Member* getBorrower() const {
         return borrower;
     }
-    
+
+    std::string getDueDateAsString() const {
+        return std::ctime(&dueDate);
+    }
+
 bool isBorrowed() const {
         return borrower != nullptr;
     }
@@ -101,13 +105,11 @@ bool isBorrowed() const {
 
     void returnBook() {
         borrower = nullptr;
-        // Additional logic for handling book return
     }
 
     void borrowBook(Member* borrower, std::time_t dueDate) {
         this->borrower = borrower;
         this->dueDate = dueDate;
-        // Additional logic for handling book borrow
     }
 
    static Book parseCSV(const string& line) {
@@ -254,13 +256,23 @@ public:
         cout << "Member added successfully!" << endl;
     }
 
-    void displayAllMembers() const {
-        cout << "All Members:" << endl;
-        for (const auto& member : members) {
-            member.displayInformation();
+   void displayBorrowedBooks() const {
+
+    // Display borrowed books for all members
+    cout << "Borrowed Books:" << endl;
+    for (const auto& book : books) {
+        if (book.isBorrowed()) {
+            cout << "Book ID: " << book.getBookID() << endl;
+            cout << "Name: " << book.getBookName() << ", Author: " << book.getAuthorFirstName() << " " << book.getAuthorLastName() << endl;
+            cout << "Borrower: " << book.getBorrower()->getName() << endl;  // Display borrower name
+            cout << "Borrower ID: " << book.getBorrower()->getMemberID() << endl; // Display borrower ID
+            cout << "Due Date: " << book.getDueDateAsString();// Display due date
+            cout << "---------------------------" << endl;//Closes with line so it looks organized and easy to read
         }
-        cout << "---------------------------" << endl;
     }
+  
+}
+
 
    void issueBook(int memberID, int bookID) {
     // Find the member with the given ID
@@ -288,55 +300,35 @@ public:
 }
 
 void returnBook(int memberID, int bookID) {
-        // Find the member with ID
-        auto memberIt = std::find_if(members.begin(), members.end(), [memberID](const Member& member) {
-            return member.getMemberID() == memberID;
+   
+    auto memberIt = std::find_if(members.begin(), members.end(), [memberID](const Member& member) {
+        return member.getMemberID() == memberID;
+    });
+
+    if (memberIt != members.end()) {
+        
+        auto bookIt = std::find_if(books.begin(), books.end(), [bookID, memberID](const Book& book) {
+            return book.getBookID() == bookID && book.isBorrowed() && book.getBorrower()->getMemberID() == memberID;
         });
 
-        if (memberIt != members.end()) {
-            // Find the book with ID
-            auto bookIt = std::find_if(books.begin(), books.end(), [bookID, memberID](const Book& book) {
-            return book.getBookID() == bookID && book.isBorrowed() && book.getBorrower()->getMemberID() == memberID;
-});
+        if (bookIt != books.end()) {
+            // Return book
+            bookIt->returnBook();
 
+            // Remove the book from the member
+            auto borrowedBooks = memberIt->getBooksBorrowed();
+            borrowedBooks.erase(std::remove_if(borrowedBooks.begin(), borrowedBooks.end(), [bookID](const Book* book) {
+                return book->getBookID() == bookID;
+            }), borrowedBooks.end());
 
-            if (bookIt != books.end()) {
-                // Return the book
-                bookIt->returnBook();
-
-                std::cout << "Book \"" << bookIt->getBookName() << "\" returned by Member ID " << memberID << " successfully!" << std::endl;
-            } else {
-                std::cout << "Book with ID " << bookID << " not borrowed by Member ID " << memberID << "." << std::endl;
-            }
+            std::cout << "Book \"" << bookIt->getBookName() << "\" returned by Member ID " << memberID << " successfully!" << std::endl;
         } else {
-            std::cout << "Member with ID " << memberID << " not found." << std::endl;
+            std::cout << "Book with ID " << bookID << " not borrowed by Member ID " << memberID << "." << std::endl;
         }
-    }
-
-void displayBorrowedBooks() const {
-    cout << "Borrowed Books:" << endl;
-    for (const auto& book : books) {
-        if (book.isBorrowed()) {
-            cout << "Book ID: " << book.getBookID() << endl;
-            cout << "Name: " << book.getBookName() << ", Author: " << book.getAuthorFirstName() << " " << book.getAuthorLastName() << endl;
-            
-            // Display borrower's name
-            //cout << "Borrower: " << book.getBorrowerName() << endl;
-            
-            // Display due date
-            //cout << "Due Date: " << book.getDueDateAsString();
-
-            cout << "---------------------------" << endl;
-        }
+    } else {
+        std::cout << "Member with ID " << memberID << " not found." << std::endl;
     }
 }
-
-
-
-
-
-
-
 
 
 void addBookToLibrary(const Book& book) {
@@ -375,18 +367,17 @@ int main() {
     cout << "Welcome to the library!" << endl;
     
     do {
-        cout << "Select command: Exit (0), Add member (1), Display all members (2), Issue a book (3), Return a Book (4): ";
+        cout << "Select command: Exit (0), Add member (1), View borrowed books (2), Issue a book (3), Return a Book (4), Calculate Fine (5): ";
         cin >> input;
 
         switch (input) {
             case 1:
-                admin.displayBorrowedBooks();
                 admin.addMember();
                 
                 break;
 
             case 2:
-                admin.displayAllMembers();
+                admin.displayBorrowedBooks();
                 break;
 
             case 3:
