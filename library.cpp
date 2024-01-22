@@ -1,72 +1,412 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include <string>
+#include <ctime>
+#include <algorithm>
 
-struct Book {
-    std::string bookID;
-    std::string bookName;
-    int pageCount;
-    std::string authorFirstName;
-    std::string authorLastName;
-    std::string bookType;
-};
+using namespace std;
+class Person;
+class Book;
+class Member;
+class Librarian;
 
-// Function to search for a book by its ID
-Book findBookByID(std::ifstream& inputFile, const std::string& bookID) {
-    std::string line;
-    while (std::getline(inputFile, line)) {
-        std::istringstream iss(line);
-        Book book;
+class Person {
+protected:
+    string name;
+    string address;
+    string email;
 
-        // Read book ID
-        std::getline(iss, book.bookID, ',');
-
-        // Read book name (handle quotes)
-        std::getline(iss, book.bookName, ',');
-        if (book.bookName.front() == '"' && book.bookName.back() != '"') {
-            // The book name is spread across multiple columns, continue reading until the closing quote
-            std::string additionalPart;
-            std::getline(iss, additionalPart, '"');
-            book.bookName += "," + additionalPart;
-        }
-
-        // Read remaining fields
-        iss >> book.pageCount;
-        std::getline(iss >> std::ws, book.authorFirstName, ',');
-        std::getline(iss, book.authorLastName, ',');
-        std::getline(iss, book.bookType, ',');
-
-        if (book.bookID == bookID) {
-            return book;
-        }
+public:
+    string getName() const {
+        return name;
     }
 
-    // Return a book with empty values if not found
-    return {"", "", 0, "", "", ""};
+    void setName(const string& n) {
+        name = n;
+    }
+
+    string getAddress() const {
+        return address;
+    }
+
+    void setAddress(const string& a) {
+        address = a;
+    }
+
+    string getEmail() const {
+        return email;
+    }
+
+    void setEmail(const string& e) {
+        email = e;
+    }
+};
+
+class Book {
+private:
+    int bookID;
+    string bookName;
+    int pageCount;
+    string authorFirstName;
+    string authorLastName;
+    string bookType;
+    std::time_t dueDate;
+    Member* borrower;
+
+public:
+
+Member* getBorrower() const {
+        return borrower;
+    }
+
+    std::string getDueDateAsString() const {
+        return std::ctime(&dueDate);
+    }
+
+bool isBorrowed() const {
+        return borrower != nullptr;
+    }
+    Book(int id, const string& name, int count, const string& firstName, const string& lastName, const string& type)
+        : bookID(id), bookName(name), pageCount(count), authorFirstName(firstName), authorLastName(lastName), bookType(type), borrower(nullptr) {}
+
+    int getBookID() const {
+        return bookID;
+    }
+
+    string getBookName() const {
+        return bookName;
+    }
+
+    string getAuthorFirstName() const {
+        return authorFirstName;
+    }
+
+    string getAuthorLastName() const {
+        return authorLastName;
+    }
+
+//     std::string Book::getBorrowerName() const {
+//     if (borrower) {
+//         return borrower->getName();
+//     } else {
+//         return "N/A";
+//     }
+// }
+
+//     std::string Book::getDueDateAsString() const {
+//     if (borrower) {
+//         return std::ctime(&dueDate);
+//     } else {
+//         return "N/A";
+//     }
+// }
+
+    void returnBook() {
+        borrower = nullptr;
+    }
+
+    void borrowBook(Member* borrower, std::time_t dueDate) {
+        this->borrower = borrower;
+        this->dueDate = dueDate;
+    }
+
+   static Book parseCSV(const string& line) {
+    cout << "Parsing CSV line: " << line << endl;
+
+    stringstream ss(line);
+    string token;
+
+    // information from tokens
+    getline(ss, token, ',');
+    int bookID = stoi(token);
+    
+    getline(ss, token, ','); // Book Name
+    if (token.front() == '"' && token.back() != '"') { //Checks if the begginning has a " and the end has a ". if only goes through if both conditions are met using the and.
+        // The book name is split across multiple tokens
+        string additionalToken;
+        do {
+            getline(ss, additionalToken, ',');
+            token += "," + additionalToken;
+        } while (additionalToken.empty() || additionalToken.back() != '"');
+    }
+    string bookName = token;
+
+    getline(ss, token, ','); 
+    int pageCount = stoi(token);
+
+    getline(ss, token, ',');
+    string authorFirstName = token;
+
+    getline(ss, token, ',');
+    string authorLastName = token;
+
+    getline(ss, token, ',');
+    string bookType = token;
+
+    cout << "Book: ID=" << bookID << ", Name=" << bookName << ", PageCount=" << pageCount
+         << ", AuthorFirstName=" << authorFirstName << ", AuthorLastName=" << authorLastName << ", BookType=" << bookType << endl;
+
+    // Return a Book object with the extracted information
+    return Book(bookID, bookName, pageCount, authorFirstName, authorLastName, bookType);
 }
 
+
+
+
+};
+
+
+class Member : public Person {
+private:
+    int memberID;
+    vector<Book*> booksLoaned;
+
+public:
+    Member(int id, const string& n, const string& a, const string& e)
+        : memberID(id) {
+        setName(n);
+        setAddress(a);
+        setEmail(e);
+    }
+
+    int getMemberID() const {
+        return memberID;
+    }
+
+    const vector<Book*>& getBooksBorrowed() const {
+        return booksLoaned;
+    }
+
+    void setBooksBorrowed(Book* book) {
+    booksLoaned.push_back(book);
+    book->borrowBook(this, std::time(nullptr) + 3 * 24 * 60 * 60); // 3 days from now
+}
+
+   void displayInformation() const {
+    cout << "Member ID: " << getMemberID() << endl;
+    cout << "Name: " << getName() << ", Address: " << getAddress() << ", Email: " << getEmail() << endl;
+    cout << "Books Borrowed:" << endl;
+    if (booksLoaned.empty()) {
+        cout << " - No books borrowed." << endl;
+    } else {
+        for (const auto& book : booksLoaned) {
+            cout << " - " << book->getBookName() << endl;
+        }
+    }
+    cout << "---------------------------" << endl;
+}
+    
+};
+
+
+
+class Librarian : public Person {
+private:
+    int staffID;
+    int salary;
+    vector<Member> members;
+    vector<Book> books;
+
+public:
+    Librarian(int id, const string& n, const string& a, const string& e, int s)
+        : staffID(id), salary(s) {
+        setName(n);
+        setAddress(a);
+        setEmail(e);
+    }
+
+    int getStaffID() const {
+        return staffID;
+    }
+
+    void setStaffID(int id) {
+        staffID = id;
+    }
+
+    int getSalary() const {
+        return salary;
+    }
+
+    void setSalary(int s) {
+        salary = s;
+    }
+
+    void addMember() {
+        int memberID;
+        string memberName;
+        string memberAddress;
+        string memberEmail;
+
+        // Get member details from the librarian
+        cout << "Enter Member ID: ";
+        cin >> memberID;
+        cout << "Enter Member Name: ";
+        cin.ignore();  // Ignore any newline character left in the input buffer
+        getline(cin, memberName);
+        cout << "Enter Member Address: ";
+        getline(cin, memberAddress);
+        cout << "Enter Member Email: ";
+        getline(cin, memberEmail);
+
+        // Create a Member object and add it to the members vector
+        members.push_back(Member(memberID, memberName, memberAddress, memberEmail));
+
+        cout << "Member added successfully!" << endl;
+    }
+
+   void displayBorrowedBooks() const {
+
+    // Display borrowed books for all members
+    cout << "Borrowed Books:" << endl;
+    for (const auto& book : books) {
+        if (book.isBorrowed()) {
+            cout << "\n" << "Book ID: " << book.getBookID() << endl;
+            cout << "Name: " << book.getBookName() << ", Author: " << book.getAuthorFirstName() << " " << book.getAuthorLastName() << endl;
+            //cout << "Borrower: " << book.getBorrower()->getName() << endl;  // Display borrower name
+            cout << "Borrower ID: " << book.getBorrower()->getMemberID() << endl; // Display borrower ID
+            cout << "Due Date: " << book.getDueDateAsString();// Display due date
+            cout << "---------------------------" << endl;//Closes with line so it looks organized and easy to read
+        }
+    }
+  
+}
+
+
+   void issueBook(int memberID, int bookID) {
+    // Find the member with the given ID
+    auto memberIt = std::find_if(members.begin(), members.end(), [memberID](const Member& member) {
+        return member.getMemberID() == memberID;
+    });
+
+    if (memberIt != members.end()) {
+        // Find the book with the given ID
+        auto bookIt = std::find_if(books.begin(), books.end(), [bookID](const Book& book) {
+            return book.getBookID() == bookID && !book.isBorrowed();
+        });
+
+        if (bookIt != books.end()) {
+            // Issue the book to the member
+            memberIt->setBooksBorrowed(&(*bookIt));
+
+            std::cout << "Book \"" << bookIt->getBookName() << "\" issued to Member ID " << memberID << " successfully!" << std::endl;
+        } else {
+            std::cout << "Book with ID " << bookID << " not available for issue or already borrowed." << std::endl;
+        }
+    } else {
+        std::cout << "Member with ID " << memberID << " not found." << std::endl;
+    }
+}
+
+void returnBook(int memberID, int bookID) {
+   
+    auto memberIt = std::find_if(members.begin(), members.end(), [memberID](const Member& member) {
+        return member.getMemberID() == memberID;
+    });
+
+    if (memberIt != members.end()) {
+        
+        auto bookIt = std::find_if(books.begin(), books.end(), [bookID, memberID](const Book& book) {
+            return book.getBookID() == bookID && book.isBorrowed() && book.getBorrower()->getMemberID() == memberID;
+        });
+
+        if (bookIt != books.end()) {
+            // Return book
+            bookIt->returnBook();
+
+            // Remove the book from the member
+            auto borrowedBooks = memberIt->getBooksBorrowed();
+            borrowedBooks.erase(std::remove_if(borrowedBooks.begin(), borrowedBooks.end(), [bookID](const Book* book) {
+                return book->getBookID() == bookID;
+            }), borrowedBooks.end());
+
+            std::cout << "Book \"" << bookIt->getBookName() << "\" returned by Member ID " << memberID << " successfully!" << std::endl;
+        } else {
+            std::cout << "Book with ID " << bookID << " not borrowed by Member ID " << memberID << "." << std::endl;
+        }
+    } else {
+        std::cout << "Member with ID " << memberID << " not found." << std::endl;
+    }
+}
+
+
+void addBookToLibrary(const Book& book) {
+        books.push_back(book);
+    }
+};
+
 int main() {
-    std::ifstream inputFile("library_books.csv");
-    if (!inputFile.is_open()) {
-        std::cerr << "Error opening the file." << std::endl;
+
+    
+     Librarian admin(1, "Admin", "Library", "main@library.com", 27000);
+
+     ifstream file("library_books.csv");
+    if (!file.is_open()) {
+        cerr << "Error: Could not open the file." << endl;
         return 1;
     }
 
-    std::string searchID;
-    std::cout << "Enter the Book ID: ";
-    std::cin >> searchID;
+    // Read the first line of the CSV file
+    string line;
 
-    Book foundBook = findBookByID(inputFile, searchID);
-    inputFile.close();
+    getline(file, line); //Skips line 1 because books start at line 2.
+    while (getline(file, line)) {
+    // Parse the line as a Book object
+    Book book = Book::parseCSV(line);
+    admin.addBookToLibrary(book);
+    // Print details of the parsed book for debugging
+    cout << "Book ID: " << book.getBookID() << ", Book Name: " << book.getBookName() << endl;
+}
 
-    if (foundBook.bookID.empty()) {
-        std::cout << "Book not found." << std::endl;
-    } else {
-        std::cout << "Book Name: " << foundBook.bookName << std::endl;
-        std::cout << "Author: " << foundBook.authorFirstName << " " << foundBook.authorLastName << std::endl;
-    }
+    file.close();
+
+    int input;
+    
+
+    cout << "Welcome to the library!" << endl;
+    
+    do {
+        cout << "Select command: Exit (0), Add member (1), View borrowed books (2), Issue a book (3), Return a Book (4), Calculate Fine (5): ";
+        cin >> input;
+
+        switch (input) {
+            case 1:
+                admin.addMember();
+                
+                break;
+
+            case 2:
+                admin.displayBorrowedBooks();
+                break;
+
+            case 3:
+                int memberID, bookID;
+                cout << "Enter Member ID: ";
+                cin >> memberID;
+                cout << "Enter Book ID: ";
+                cin >> bookID;
+                admin.issueBook(memberID, bookID);
+                break;
+
+            case 4:
+               int returnMemberID, returnBookID;
+                cout << "Enter Member ID for returning a book: ";
+                cin >> returnMemberID;
+                cout << "Enter Book ID for returning: ";
+                cin >> returnBookID;
+                admin.returnBook(returnMemberID, returnBookID);
+                break;
+                
+
+            case 0:
+                cout << "Exiting program." << endl;
+                break;
+
+            default:
+                cout << "Invalid command. Please try again." << endl;
+        }
+    } while (input != 0);
 
     return 0;
 }
-
