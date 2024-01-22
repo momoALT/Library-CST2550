@@ -151,5 +151,5 @@ void addBookToLibrary(const Book& book) {
         books.push_back(book);
     }
 };
-
+// references: https://www.w3schools.com/cpp/cpp_oop.asp classes
 #endif // LIBRARIAN_H

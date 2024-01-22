@@ -86,3 +86,5 @@ int main() {
 
     return 0;
 }
+
+//references https://stackoverflow.com/questions/49721121/reading-csv-with-fstream-and-only-fstream for csv file reading using fstream

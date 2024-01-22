@@ -58,5 +58,6 @@ public:
     
 };
 
-
+//references : https://www.geeksforgeeks.org/ctime-function-in-c-c/ for ctime
+//https://www.w3schools.com/cpp/cpp_oop.asp classes
 #endif // MEMBER_H

@@ -97,7 +97,7 @@ bool isBorrowed() const {
     int bookID = stoi(token);
     
     getline(ss, token, ','); // Book Name
-    if (token.front() == '"' && token.back() != '"') { //Checks if the begginning has a " and the end has a ". if only goes through if both conditions are met using the and.
+    if (token.front() == '"' && token.back() != '"') { //Checks if the begginning has a " and the end does not have a ". if only goes through if both conditions are met using the and.
         // The book name is split across multiple tokens
         string additionalToken;
         do {
@@ -131,4 +131,6 @@ bool isBorrowed() const {
 
 };
 
+//references: https://www.softwaretestinghelp.com/stringstream-class-in-cpp/ for sstream
+//https://www.w3schools.com/cpp/cpp_oop.asp classes
 #endif // BOOK_H
