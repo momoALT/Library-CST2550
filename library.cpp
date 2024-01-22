@@ -23,7 +23,7 @@ int main() {
         return 1;
     }
 
-    // Read the first line of the CSV file
+    
     string line;
 
     getline(file, line); //Skips line 1 because books start at line 2.
