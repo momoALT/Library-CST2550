@@ -59,7 +59,7 @@ public:
         cout << "Enter Member ID: ";
         cin >> memberID;
         cout << "Enter Member Name: ";
-        cin.ignore();  // Ignore any newline character left in the input buffer
+        cin.ignore(); 
         getline(cin, memberName);
         cout << "Enter Member Address: ";
         getline(cin, memberAddress);

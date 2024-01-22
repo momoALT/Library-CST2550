@@ -11,9 +11,6 @@
 
 using namespace std;
 
-// #include "Person.h" 
-// #include "Member.h"
-// #include "Librarian.h"
 
 class Member;
 class Librarian;
@@ -61,21 +58,6 @@ bool isBorrowed() const {
         return authorLastName;
     }
 
-//     std::string Book::getBorrowerName() const {
-//     if (borrower) {
-//         return borrower->getName();
-//     } else {
-//         return "N/A";
-//     }
-// }
-
-//     std::string Book::getDueDateAsString() const {
-//     if (borrower) {
-//         return std::ctime(&dueDate);
-//     } else {
-//         return "N/A";
-//     }
-// }
 
     void returnBook() {
         borrower = nullptr;
