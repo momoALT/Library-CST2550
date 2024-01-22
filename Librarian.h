@@ -60,6 +60,7 @@ public:
         cin >> memberID;
         cout << "Enter Member Name: ";
         cin.ignore(); 
+        
         getline(cin, memberName);
         cout << "Enter Member Address: ";
         getline(cin, memberAddress);

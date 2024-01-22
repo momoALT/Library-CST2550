@@ -40,7 +40,7 @@ int main() {
     int input;
     
 
-    cout << "Welcome to the library!" << endl;
+    cout << "\n" << "\n" << "Welcome to the library!" << endl;
     
     do {
         cout << "Select command: Exit (0), Add member (1), View borrowed books (2), Issue a book (3), Return a Book (4), Calculate Fine (5): ";
